@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Твой необычный день рождения</title>
+<style>
+:root{--bg:#efe3cc;--page:#fbf4e4;--tx:#3b2a1d;--mut:#8a7358;--ac:#8c2f39;--line:#d9c6a3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1410;--page:#261d16;--tx:#eadcc4;--mut:#a89274;--ac:#e0867f;--line:#4a3a2b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Georgia,"Times New Roman",serif;padding:18px 14px 40px}
+main{max-width:480px;margin:0 auto}
+.cover{text-align:center;padding:18px 8px 8px}
+.orn{color:var(--ac);letter-spacing:8px}
+h1{font-size:28px;line-height:1.2;margin:8px 0 6px}
+.intro{font-style:italic;color:var(--mut);line-height:1.5;margin:0 0 20px}
+.words{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 22px}
+.chip{padding:6px 12px;border:1px dashed var(--mut);border-radius:6px;color:var(--mut);font-weight:700;min-width:40px;text-align:center}
+.chip.got{border:1px solid var(--ac);color:var(--ac);background:var(--page)}
+.pg{background:var(--page);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 0 var(--line)}
+.pg.locked{opacity:.5}
+.no{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.nm{font-size:21px;font-weight:700;margin:2px 0 8px}
+.tx{line-height:1.55;margin:0}
+.rules{margin:0;padding-left:20px;line-height:1.6}
+.rules li{margin-bottom:6px}
+.row{display:flex;gap:8px;margin-top:14px}
+input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--mut);border-radius:6px;background:transparent;color:var(--tx);font:inherit;font-size:16px}
+button{padding:10px 16px;border:0;border-radius:6px;background:var(--ac);color:#fff;font:inherit;font-size:16px;font-weight:700}
+.big{display:block;width:100%;margin-top:6px;padding:14px;font-size:18px}
+.err{color:var(--ac);font-size:14px;min-height:18px;margin-top:6px}
+.ok{color:var(--ac);font-weight:700;margin-top:6px}
+.wait{color:var(--mut);font-style:italic;margin-top:8px}
+.fin{text-align:center;padding:20px 16px;border:2px solid var(--ac);border-radius:6px;background:var(--page);line-height:1.6}
+.vid{display:inline-block;margin-top:14px;padding:12px 20px;border-radius:6px;background:var(--ac);color:#fff;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<main>
+<div class="cover">
+<div class="orn">❦ ❦ ❦</div>
+<h1>ЛТвой необычный день рождения</h1>
+</div>
+<div id="start"></div>
+<div id="game" style="display:none">
+<div class="words" id="words"></div>
+<div id="path"></div>
+<div id="end"></div>
+</div>
+</main>
+<script>
+// ===== МЕНЯТЬ ТУТ =====
+var TIME="19:20"; // во сколько я прилетаю
+var VIDEO=""; // ссылка на видео-поздравление (пока пусто: кнопка не показывается)
+// hint — подсказка, где искать подарок; code — кодовое слово с открытки (через |);
+// piece — слово фразы; at — во сколько откроется глава (пусто = сразу)
+var CH=[
+ {name:"Утро",hint:"С днём рождения! Сегодня у тебя целый день сюрпризов. Первый придёт к тебе сам, с поздравлениями.",code:"СВЕЧА|СВЕЧКА",piece:"Я",at:""},
+ {name:"Тишина",hint:"Загляни в гости к тем, кто живёт с нами в одном подъезде и всегда накормит. Среди гречки, риса и пшена прячется то, что замедляет время.",code:"КНИГА|КНИГИ",piece:"БУДУ",at:"10:00"},
+ {name:"Умелые ручки",hint:"Всё там же, в гостях. В большой комнате, где собирается семья, один шкаф хранит кое-что для тебя.",code:"КОНСТРУКТОР|ЛЕГО",piece:"ЖДАТЬ",at:"11:30"},
+ {name:"Секрет",hint:"Возвращайся домой. Здесь есть вещь, которая умеет хранить секреты под замком.",code:"СЕЙФ",piece:"ТЕБЯ",at:"13:30"},
+ {name:"Тепло",hint:"Вечер, скоро в дорогу. Ищи там, где дом с тобой прощается: там тебя ждёт тепло.",code:"ШАРФ",piece:"СЕГОДНЯ",at:"15:30"},
+ {name:"На низком старте",hint:"Ещё раз в гости. Посмотри повыше, под потолком, где дует и летом прохладно, и зимой тепло.",code:"АЭРОПОРТ|САМОЛЕТ|САМОЛЕТИК",piece:"В",at:"17:30"},
+ {name:"Награда",hint:"Вспомни, где ты ночевал у них раньше. Рядом с той кроватью лежит награда за все твои старания.",code:"МАССАЖЕР",piece:"АЭРОПОРТУ",at:"18:30"}
+];
+// ======================
+var started=false,done=0;
+try{started=localStorage.getItem("book_started")==="1";done=parseInt(localStorage.getItem("book_done")||"0",10)||0}catch(e){}
+function norm(s){return s.trim().toUpperCase().replace(/Ё/g,"Е")}
+function unlocked(i){
+ if(location.hash==="#test")return true;
+ var a=CH[i].at;if(!a)return true;
+ var p=a.split(":"),n=new Date();
+ return n.getHours()*60+n.getMinutes()>=parseInt(p[0],10)*60+parseInt(p[1],10);
+}
+function begin(){started=true;try{localStorage.setItem("book_started","1")}catch(e){}render()}
+function render(){
+ var s=document.getElementById("start"),g=document.getElementById("game");
+ if(!started){
+  g.style.display="none";
+  s.innerHTML='<div class="pg"><div class="no">Вступление</div><div class="nm">О чём эта книга</div>'+
+  '<p class="tx">Эта книга пишется сегодня, прямо для тебя. Весь день тебя ждут сюрпризы. Вот как всё устроено:</p>'+
+  '<ol class="rules"><li>В каждой главе есть подсказка, где искать подарок. Она не всегда очевидна, так что думай.</li>'+
+  '<li>Рядом с подарком лежит открытка с загадкой. Впиши его в книгу, и откроется слово из послания и следующая глава.</li>'+
+  '<li>Главы открываются в течение дня, поэтому не спеши.</li>'+
+  '<li>Когда соберёшь все слова, из них сложится последнее послание. Оно скажет, что делать дальше.</li></ol>'+
+  '<button class="big" id="go">Начать</button></div>';
+  document.getElementById("go").onclick=begin;return;
+ }
+ s.innerHTML="";g.style.display="block";
+ document.getElementById("words").innerHTML=CH.map(function(c,i){return i<done?'<span class="chip got">'+c.piece+"</span>":'<span class="chip">?</span>'}).join("");
+ var p=document.getElementById("path");p.innerHTML="";
+ CH.forEach(function(c,i){
+  var st=i<done?"done":(i===done?"open":"locked");
+  var d=document.createElement("div");d.className="pg "+st;
+  var h='<div class="no">Глава '+(i+1)+'</div><div class="nm">'+c.name+"</div>";
+  if(st==="locked")h+='<p class="tx">Эта страница ещё пуста…</p>';
+  else if(st==="open"&&!unlocked(i))h+='<p class="tx">Эта страница ещё пуста…</p><div class="wait">Глава откроется в '+c.at+"</div>";
+  else{h+='<p class="tx">'+c.hint+"</p>";
+   if(st==="open")h+='<div class="row"><input id="c" placeholder="Кодовое слово с открытки" autocomplete="off"><button id="b">Ок</button></div><div class="err" id="e"></div>';
+   else h+='<div class="ok">✓ Слово главы: '+c.piece+"</div>";}
+  d.innerHTML=h;p.appendChild(d);
+ });
+ var msg=CH.map(function(c){return c.piece}).join(" ");
+ document.getElementById("end").innerHTML=done>=CH.length?'<div class="fin"><div class="orn">❦</div>Эпилог<br><b style="font-size:22px">'+msg+'</b><br>Мой рейс прилетает в '+TIME+'. Одевайся потеплее и выезжай.'+(VIDEO?'<br><a class="vid" target="_blank" rel="noopener" href="'+VIDEO+'">🎬 Смотреть поздравление</a>':"")+"</div>":"";
+ var b=document.getElementById("b");
+ if(b){b.onclick=check;document.getElementById("c").onkeydown=function(e){if(e.key==="Enter")check()}}
+}
+function check(){
+ var v=norm(document.getElementById("c").value);
+ var oks=CH[done].code.split("|").map(norm);
+ if(oks.indexOf(v)>-1){done++;try{localStorage.setItem("book_done",String(done))}catch(e){}render()}
+ else document.getElementById("e").textContent="Хмм, не то слово. Подумай еще!";
+}
+setInterval(function(){if(started&&done<CH.length&&!document.getElementById("c")&&unlocked(done))render()},20000);
+function maybeReset(){if(location.hash==="#reset"){try{localStorage.removeItem("book_started");localStorage.removeItem("book_done")}catch(e){}started=false;done=0;location.hash="test"}}
+maybeReset();window.addEventListener("hashchange",function(){maybeReset();render()});
+render();
+</script>
+</body>
+</html>
