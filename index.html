@@ -102,7 +102,7 @@ function render(){
   d.innerHTML=h;p.appendChild(d);
  });
  var msg=CH.map(function(c){return c.piece}).join(" ");
- document.getElementById("end").innerHTML=done>=CH.length?'<div class="fin"><div class="orn">❦</div>Эпилог<br><b style="font-size:22px">'+msg+'</b><br>Мой рейс прилетает в '+TIME+'. Одевайся потеплее и выезжай.'+(VIDEO?'<br><a class="vid" target="_blank" rel="noopener" href="'+VIDEO+'">🎬 Смотреть поздравление</a>':"")+"</div>":"";
+ document.getElementById("end").innerHTML=done>=CH.length?'<div class="fin"><div class="orn">❦</div>Эпилог<br><b style="font-size:22px">'+msg+'</b><br>Мой рейс прилетает в '+TIME+'. Одевайся потеплее и выезжай.'+(VIDEO?'<br><a class="vid" target="_blank" rel="noopener" href="'+VIDEO+'">НАЖМИ МЕНЯ!!!</a>':"")+"</div>":"";
  var b=document.getElementById("b");
  if(b){b.onclick=check;document.getElementById("c").onkeydown=function(e){if(e.key==="Enter")check()}}
 }
